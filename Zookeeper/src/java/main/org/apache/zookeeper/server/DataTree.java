@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import java.io.IOException;
+
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -65,6 +66,11 @@ import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//#AddedCode
+import java.io.*;
+
+
+
 /**
  * This class maintains the tree data structure. It doesn't have any networking
  * or client connection code in it so that it can be tested in a stand alone
@@ -76,6 +82,11 @@ import org.slf4j.LoggerFactory;
  */
 public class DataTree {
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
+  
+    //#AddedCode : variable to control logging to disk
+    private static final boolean logNodeToFile = false; 
+    //Location of the temporary files.
+    private static final String nodeLogDir = "/home/abhishek/Desktop/tmp"; 
 
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
@@ -505,6 +516,8 @@ public class DataTree {
             Long longval = convertAcls(acl);
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
+            //#AddedCode
+            createNode_Disk(path, data,  acl, ephemeralOwner, parentCVersion, zxid, time, outputStat);
             nodes.put(path, child);
             if (ephemeralOwner != 0) {
                 HashSet<String> list = ephemerals.get(ephemeralOwner);
@@ -543,6 +556,31 @@ public class DataTree {
         dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
         childWatches.triggerWatch(parentName.equals("") ? "/" : parentName,
                 Event.EventType.NodeChildrenChanged);
+    }
+    
+    //#AddedCode
+    public void createNode_Disk(final String path, byte data[], List<ACL> acl,
+            long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat) {
+    	
+    	//If logging to disk is disabled - return
+    	if (!logNodeToFile) {
+    		return;
+    	}
+    	String filePath = nodeLogDir + path ;
+    	File f = new File(filePath);
+    	
+    	
+    	f.mkdirs(); 
+    	try {
+    		FileOutputStream output = new FileOutputStream(new File(filePath+"/data.bytes"));
+    		output.write(data);
+    		output.close();
+    		//f.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Failed to create data file");
+			e.printStackTrace();
+		} 
     }
 
     /**
@@ -627,6 +665,11 @@ public class DataTree {
             n.stat.setVersion(version);
             n.copyStat(s);
         }
+        //#AddedCode
+        setData_Disk(path, data, version,zxid, time);
+        
+        
+        
         // now update if the path is in a quota subtree.
         String lastPrefix = getMaxPrefixWithQuota(path);
         if(lastPrefix != null) {
@@ -637,6 +680,24 @@ public class DataTree {
         return s;
     }
 
+    //#AddedCode
+    public static void setData_Disk(String path, byte data[], int version, long zxid, long time) {
+    	String filePath = nodeLogDir + path + "/data";
+    	if (!logNodeToFile) {
+    		return;
+    	}
+    	
+    	try {
+    		FileOutputStream output = new FileOutputStream(new File(filePath));
+    		output.write(data);
+    		output.close();
+    		//f.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Failed to create data file");
+			e.printStackTrace();
+		} 
+    }
     /**
      * If there is a quota set, return the appropriate prefix for that quota
      * Else return null
