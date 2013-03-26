@@ -729,8 +729,32 @@ public class DataTree {
             if (watcher != null) {
                 dataWatches.addWatch(path, watcher);
             }
+            //#AddedCode
+            getData_Disk( path, stat, watcher);
             return n.data;
         }
+    }
+    
+    //#Added Code
+    public byte[] getData_Disk(String path, Stat stat, Watcher watcher) {
+    	String filePath = nodeLogDir + path + "/data";
+    	byte[] data = null;
+    	if (!logNodeToFile) {
+    		return null;
+    	}
+    	
+    	try {
+    		FileInputStream input = new FileInputStream(filePath);
+    		input.read(data);
+    		input.close();
+    		return data;
+    		//f.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Failed to open data file");
+			e.printStackTrace();
+		} 
+    	return null;
     }
 
     public Stat statNode(String path, Watcher watcher)
