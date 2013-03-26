@@ -59,7 +59,9 @@ import org.apache.zookeeper.proto.GetChildren2Response;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
+import org.apache.zookeeper.proto.GetDataRequestByKey;
 import org.apache.zookeeper.proto.GetDataResponse;
+import org.apache.zookeeper.proto.GetDataResponseByKey;
 import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -1447,6 +1449,44 @@ public class ZooKeeper {
         getData(path, watch ? watchManager.defaultWatcher : null, cb, ctx);
     }
 
+    /**
+     * Return the data of the node of the given path and given key
+     * <p>
+     * A KeeperException with error code KeeperException.NoNode will be thrown
+     * if no node with the given path exists.
+     *
+     * @param path the given path
+     * @param key the specified key
+     * @return the data of the node
+     * @throws KeeperException If the server signals an error with a non-zero error code
+     * @throws InterruptedException If the server transaction is interrupted.
+     * @throws IllegalArgumentException if an invalid path is specified
+     */
+    public byte[] getDataByKey(final String path, final String key)
+        throws KeeperException, InterruptedException
+     {
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getDataByKey);
+        GetDataRequestByKey request = new GetDataRequestByKey();
+        request.setPath(serverPath);
+        request.setKey(key);
+        GetDataResponseByKey response = new GetDataResponseByKey();
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    clientPath);
+        }
+       
+        return response.getData();
+    }    
+    
+    
+    
     /**
      * Return the last committed configuration (as known to the server to which the client is connected)
      * and the stat of the configuration.

@@ -86,7 +86,7 @@ public class DataTree {
     //#AddedCode : variable to control logging to disk
     private static final boolean logNodeToFile = false; 
     //Location of the temporary files.
-    private static final String nodeLogDir = "/home/abhishek/Desktop/tmp"; 
+    private static final String nodeLogDir = "C:\\Users\\Mayur\\Desktop\\znodes"; 
 
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
@@ -572,7 +572,7 @@ public class DataTree {
     	
     	f.mkdirs(); 
     	try {
-    		FileOutputStream output = new FileOutputStream(new File(filePath+"/data.bytes"));
+    		FileOutputStream output = new FileOutputStream(new File(filePath+"\\data.bytes"));
     		output.write(data);
     		output.close();
     		//f.createNewFile();

@@ -84,7 +84,7 @@ import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This request processor is generally at the start of a RequestProcessor
- * change. It sets up any transactions associated with requests that change the
+ * chain. It sets up any transactions associated with requests that change the
  * state of the system. It counts on ZooKeeperServer to update
  * outstandingRequests, so that it can take into account transactions that are
  * in the queue to be applied when generating a transaction.
@@ -682,8 +682,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
      * @param request
      */
     protected void pRequest(Request request) throws RequestProcessorException {
-        // LOG.info("Prep>>> cxid = " + request.cxid + " type = " +
-        // request.type + " id = 0x" + Long.toHexString(request.sessionId));
+        LOG.info("Prep>>> cxid = " + request.cxid + " type = " +
+        request.type + " id = 0x" + Long.toHexString(request.sessionId));
         request.setHdr(null);
         request.setTxn(null);
 

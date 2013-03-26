@@ -61,6 +61,8 @@ public class ZooDefs {
 
         public final int reconfig = 16;
         
+        public final int getDataByKey = 17;
+        
         public final int auth = 100;
 
         public final int setWatches = 101;
@@ -121,6 +123,6 @@ public class ZooDefs {
     }
 
     final public static String[] opNames = { "notification", "create",
-            "delete", "exists", "getData", "setData", "getACL", "setACL",
+            "delete", "exists", "getData", "getDataByKey", "setData", "getACL", "setACL",
             "getChildren", "getChildren2", "getMaxChildren", "setMaxChildren", "ping", "reconfig", "getConfig" };
 }

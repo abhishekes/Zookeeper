@@ -125,6 +125,7 @@ public class Request {
         case OpCode.createSession:
         case OpCode.exists:
         case OpCode.getData:
+        case OpCode.getDataByKey:
         case OpCode.check:
         case OpCode.multi:
         case OpCode.setData:
@@ -143,6 +144,12 @@ public class Request {
         }
     }
 
+    //CS525 TODO
+    /*
+     * for getData they are assuming noQuorum, but we might need to give that functionality
+     * why is the case that they don't require Quorum for read requests?
+     */
+    
     static boolean isQuorum(int type) {
         switch (type) {
         case OpCode.exists:
@@ -151,6 +158,7 @@ public class Request {
         case OpCode.getChildren2:
         case OpCode.getData:
             return false;
+        case OpCode.getDataByKey:
         case OpCode.error:
         case OpCode.closeSession:
         case OpCode.create:
@@ -184,6 +192,8 @@ public class Request {
             return "exists";
         case OpCode.getData:
             return "getData";
+        case OpCode.getDataByKey:
+        	return "getDataByKey";
         case OpCode.check:
             return "check";
         case OpCode.multi:
