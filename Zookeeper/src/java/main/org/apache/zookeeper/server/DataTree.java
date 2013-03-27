@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import java.io.PrintWriter;
@@ -87,6 +90,9 @@ public class DataTree {
     private static final boolean logNodeToFile = false; 
     //Location of the temporary files.
     private static final String nodeLogDir = "C:\\Users\\Mayur\\Desktop\\znodes"; 
+    private static final Integer keyLength = 32 ; //32 byte key length. Value is the same as key for now
+    private static final Integer chunkSize = 64 * 1024;
+    private static final Integer numOfRows = chunkSize/keyLength; // Size of 1 chunk is 64 KB
 
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
@@ -682,15 +688,49 @@ public class DataTree {
 
     //#AddedCode
     public static void setData_Disk(String path, byte data[], int version, long zxid, long time) {
-    	String filePath = nodeLogDir + path + "/data";
+    	String filePath = nodeLogDir + path;
     	if (!logNodeToFile) {
     		return;
     	}
-    	
+    	//Read existing data from disk, update new data and write to disk
     	try {
-    		FileOutputStream output = new FileOutputStream(new File(filePath));
-    		output.write(data);
+    		//Calculate the destination file
+    		
+    		
+    		byte fileData[] = new byte[numOfRows * keyLength]; 
+    		Integer chunk = (int) java.lang.Math.ceil(Integer.parseInt(new String(data)) / (double) numOfRows) ;
+    		//Read existing data
+    		FileInputStream input = new FileInputStream(filePath + chunk.toString());
+    		input.read(fileData);
+    		input.close();
+    		byte tempkey[] = new byte[keyLength];
+    		System.arraycopy(data, 0, tempkey, 0, data.length);
+    		System.out.println(chunk + " " + (Integer.parseInt(new String(data)) - (chunk-1)*numOfRows - 1) * keyLength);
+
+    		System.arraycopy(tempkey, 0, fileData, (Integer.parseInt(new String(data)) - (chunk-1)*numOfRows - 1) * keyLength, keyLength);
+    		
+    		
+    		//System.arraycopy(fileData, 599*keyLength, tempkey, 0, keyLength);
+    		//System.out.println(new String(tempkey));
+    		
+    		
+    		FileOutputStream output = new FileOutputStream(new File(filePath + chunk.toString()));
+    		output.write(fileData);
     		output.close();
+    		
+    		
+    		
+    		/*byte fileData[] = new byte[numOfRows * keyLength]; 
+    		Integer chunk = (int) java.lang.Math.ceil(Integer.parseInt(data.toString()) / numOfRows);
+    		//Read existing data
+    		FileInputStream input = new FileInputStream(filePath + chunk.toString());
+    		input.read(fileData);
+    		input.close();
+    		System.arraycopy(data, 0, fileData, (Integer.parseInt(data.toString()) - (chunk-1)*numOfRows - 1) * keyLength, keyLength);
+    		
+    		FileOutputStream output = new FileOutputStream(new File(filePath + chunk.toString()));
+    		output.write(data);
+    		output.close();*/
     		//f.createNewFile();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -735,7 +775,7 @@ public class DataTree {
         }
     }
     
-    //#Added Code
+    //#AddedCode
     public byte[] getData_Disk(String path, Stat stat, Watcher watcher) {
     	String filePath = nodeLogDir + path + "/data";
     	byte[] data = null;
