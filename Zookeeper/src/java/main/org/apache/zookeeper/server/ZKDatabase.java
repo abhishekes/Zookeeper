@@ -362,6 +362,18 @@ public class ZKDatabase {
     }
 
     /**
+     * get data and stat for a path
+     * @param path the path being queried
+     * @param stat the stat for this path
+     * @param watcher the watcher function
+     * @return
+     * @throws KeeperException.NoNodeException
+     */
+    public byte[] getDataByKey(String path)
+    throws KeeperException.NoNodeException {
+        return dataTree.getDataByKey(path);
+    }  
+    /**
      * set watches on the datatree
      * @param relativeZxid the relative zxid that client has seen
      * @param dataWatches the data watches the client wants to reset

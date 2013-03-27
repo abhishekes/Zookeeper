@@ -157,8 +157,8 @@ public class Request {
         case OpCode.getChildren:
         case OpCode.getChildren2:
         case OpCode.getData:
+        case OpCode.getDataByKey:		//CS525 TODO:need to revisit this code
             return false;
-        case OpCode.getDataByKey:
         case OpCode.error:
         case OpCode.closeSession:
         case OpCode.create:
