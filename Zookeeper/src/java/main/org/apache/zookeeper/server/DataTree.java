@@ -744,7 +744,7 @@ public class DataTree {
         }
         synchronized (n) {
 
-            getData_Disk( path);
+            //getData_Disk(path);
             return n.data;
         }
     }
