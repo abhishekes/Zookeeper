@@ -770,7 +770,21 @@ public class DataTree {
                 dataWatches.addWatch(path, watcher);
             }
             //#AddedCode
-            getData_Disk( path, stat, watcher);
+            //getData_Disk( path, stat, watcher);
+            return n.data;
+        }
+    }
+    
+    //CS525 AddedCode
+    public byte[] getDataByKey(String path)
+            throws KeeperException.NoNodeException {
+        DataNode n = nodes.get(path);
+        if (n == null) {
+            throw new KeeperException.NoNodeException();
+        }
+        synchronized (n) {
+
+            getData_Disk( path);
             return n.data;
         }
     }

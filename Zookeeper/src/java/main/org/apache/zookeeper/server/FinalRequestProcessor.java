@@ -44,6 +44,8 @@ import org.apache.zookeeper.proto.GetChildren2Response;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
+import org.apache.zookeeper.proto.GetDataRequestByKey;
+import org.apache.zookeeper.proto.GetDataResponseByKey;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.SetACLResponse;
@@ -304,6 +306,26 @@ public class FinalRequestProcessor implements RequestProcessor {
                 byte b[] = zks.getZKDatabase().getData(getDataRequest.getPath(), stat,
                         getDataRequest.getWatch() ? cnxn : null);
                 rsp = new GetDataResponse(b, stat);
+                break;
+            }
+            case OpCode.getDataByKey: {
+                lastOp = "GETK";
+                GetDataRequestByKey getDataRequestByKey = new GetDataRequestByKey();
+                ByteBufferInputStream.byteBuffer2Record(request.request,
+                        getDataRequestByKey);
+                DataNode n = zks.getZKDatabase().getNode(getDataRequestByKey.getPath());
+                if (n == null) {
+                    throw new KeeperException.NoNodeException();
+                }
+                Long aclL;
+                synchronized(n) {
+                    aclL = n.acl;
+                }
+                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclL),
+                        ZooDefs.Perms.READ,
+                        request.authInfo);
+                byte b[] = zks.getZKDatabase().getDataByKey(getDataRequestByKey.getPath());
+                rsp = new GetDataResponseByKey(b);
                 break;
             }
             case OpCode.setWatches: {

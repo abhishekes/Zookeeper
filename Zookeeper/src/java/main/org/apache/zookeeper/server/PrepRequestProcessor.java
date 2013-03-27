@@ -798,6 +798,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
             case OpCode.sync:
             case OpCode.exists:
             case OpCode.getData:
+            case OpCode.getDataByKey:		//CS525 TODO: need to revisit this code later
             case OpCode.getACL:
             case OpCode.getChildren:
             case OpCode.getChildren2:

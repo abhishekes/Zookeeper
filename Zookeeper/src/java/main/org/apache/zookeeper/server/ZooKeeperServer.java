@@ -616,7 +616,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     LOG.warn("Unexpected interruption", e);
                 }
                 if (firstProcessor == null) {
-                    throw new RuntimeException("Not started");
+                    throw new RuntimeException("\"PrepRequestProcessor\" Not started");
                 }
             }
         }
