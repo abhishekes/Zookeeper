@@ -324,7 +324,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclL),
                         ZooDefs.Perms.READ,
                         request.authInfo);
-                byte b[] = zks.getZKDatabase().getDataByKey(getDataRequestByKey.getPath());
+                byte b[] = zks.getZKDatabase().getDataByKey(getDataRequestByKey.getPath(), getDataRequestByKey.getKey());
                 rsp = new GetDataResponseByKey(b);
                 break;
             }

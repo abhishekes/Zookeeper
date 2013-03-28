@@ -87,9 +87,9 @@ public class DataTree {
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
   
     //#AddedCode : variable to control logging to disk
-    private static final boolean logNodeToFile = false; 
+    private static final boolean logNodeToFile = true; 
     //Location of the temporary files.
-    private static final String nodeLogDir = "C:\\Users\\Mayur\\Desktop\\znodes"; 
+    private static final String nodeLogDir = DataTree.getDBRootPath(); 
     private static final Integer keyLength = 32 ; //32 byte key length. Value is the same as key for now
     private static final Integer chunkSize = 64 * 1024;
     private static final Integer numOfRows = chunkSize/keyLength; // Size of 1 chunk is 64 KB
@@ -163,6 +163,26 @@ public class DataTree {
      */
     private long aclIndex = 0;
 
+    public static String getDBRootPath() {
+    	String rPath = null;
+    	String confPath = "/home/data/git/Zookeeper/Zookeeper/conf";
+    	byte[] data = null;
+    	
+    	try {
+    		FileInputStream input = new FileInputStream(confPath);
+    		input.read(data);
+    		input.close();
+    		//f.createNewFile();
+        	rPath = data.toString();
+        	return rPath;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Failed to open config file");
+			e.printStackTrace();
+			return null;
+		} 
+    }
+    
     @SuppressWarnings("unchecked")
     public Set<String> getEphemerals(long sessionId) {
         HashSet<String> retv = ephemerals.get(sessionId);
@@ -777,23 +797,30 @@ public class DataTree {
     }
     
     //CS525 AddedCode
-    public byte[] getDataByKey(String path)
+    public byte[] getDataByKey(String path, String key)
             throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
+        byte[] retData = null;
         synchronized (n) {
 
-            getData_Disk(path);
-            return n.data;
+
+            
+
+            retData = getData_Disk(key);
+
         }
+        return retData;
     }
     
     //#AddedCode
     public byte[] getData_Disk(String key) {
+
     	String filePath = nodeLogDir + "/data.";
     	//byte[] data = null;
+
     	if (!logNodeToFile) {
     		return null;
     	}
