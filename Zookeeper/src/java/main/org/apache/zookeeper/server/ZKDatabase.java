@@ -364,14 +364,15 @@ public class ZKDatabase {
     /**
      * get data and stat for a path
      * @param path the path being queried
+     * @param key 
      * @param stat the stat for this path
      * @param watcher the watcher function
      * @return
      * @throws KeeperException.NoNodeException
      */
-    public byte[] getDataByKey(String path)
+    public byte[] getDataByKey(String path, String key)
     throws KeeperException.NoNodeException {
-        return dataTree.getDataByKey(path);
+        return dataTree.getDataByKey(path, key);
     }  
     /**
      * set watches on the datatree
