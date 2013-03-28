@@ -708,9 +708,10 @@ public class DataTree {
     //#AddedCode
     public static void setData_Disk(String path, byte data[], int version, long zxid, long time) {
     	String filePath = nodeLogDir + "/data.";
-    	if (!logNodeToFile) {
+    	if (!logNodeToFile | !path.equals(new String("/db1"))) {
     		return;
     	}
+    	
     	//Read existing data from disk, update new data and write to disk
     	try {
     		//Calculate the destination file
