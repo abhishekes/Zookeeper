@@ -165,7 +165,7 @@ public class DataTree {
 
     public static String getDBRootPath() {
     	String rPath = null;
-    	String confPath = "/home/data/git/Zookeeper/Zookeeper/conf";
+    	String confPath = "/home/data/git/Zookeeper/Zookeeper/conf/zooDB.cfg";
     	byte[] data = null;
     	
     	try {
