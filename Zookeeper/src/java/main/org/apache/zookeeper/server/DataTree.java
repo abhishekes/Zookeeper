@@ -542,7 +542,7 @@ public class DataTree {
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
             //#AddedCode
-            createNode_Disk(path, data,  acl, ephemeralOwner, parentCVersion, zxid, time, outputStat);
+            //createNode_Disk(path, data,  acl, ephemeralOwner, parentCVersion, zxid, time, outputStat);
             nodes.put(path, child);
             if (ephemeralOwner != 0) {
                 HashSet<String> list = ephemerals.get(ephemeralOwner);
