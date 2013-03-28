@@ -688,26 +688,24 @@ public class DataTree {
 
     //#AddedCode
     public static void setData_Disk(String path, byte data[], int version, long zxid, long time) {
-    	String filePath = nodeLogDir + path;
+    	String filePath = nodeLogDir + "/data.";
     	if (!logNodeToFile) {
     		return;
     	}
     	//Read existing data from disk, update new data and write to disk
     	try {
     		//Calculate the destination file
-    		
-    		
-    		byte fileData[] = new byte[numOfRows * keyLength]; 
-    		Integer chunk = (int) java.lang.Math.ceil(Integer.parseInt(new String(data)) / (double) numOfRows) ;
+      		byte fileData[] = new byte[numOfRows * keyLength]; 
+    		Integer chunk = (int) java.lang.Math.ceil(Long.parseLong(new String(data)) / (double) numOfRows) ;
     		//Read existing data
     		FileInputStream input = new FileInputStream(filePath + chunk.toString());
     		input.read(fileData);
     		input.close();
     		byte tempkey[] = new byte[keyLength];
     		System.arraycopy(data, 0, tempkey, 0, data.length);
-    		System.out.println(chunk + " " + (Integer.parseInt(new String(data)) - (chunk-1)*numOfRows - 1) * keyLength);
+    		//System.out.println(chunk + " " + (Integer.parseInt(new String(data)) - (chunk-1)*numOfRows - 1) * keyLength);
 
-    		System.arraycopy(tempkey, 0, fileData, (Integer.parseInt(new String(data)) - (chunk-1)*numOfRows - 1) * keyLength, keyLength);
+    		System.arraycopy(tempkey, 0, fileData, (int)((Long.parseLong(new String(data)) - (chunk-1)*numOfRows - 1) * keyLength), keyLength);
     		
     		
     		//System.arraycopy(fileData, 599*keyLength, tempkey, 0, keyLength);
@@ -716,7 +714,10 @@ public class DataTree {
     		
     		FileOutputStream output = new FileOutputStream(new File(filePath + chunk.toString()));
     		output.write(fileData);
+    		output.flush();
     		output.close();
+    		
+ 
     		
     		
     		
@@ -784,31 +785,47 @@ public class DataTree {
         }
         synchronized (n) {
 
-            //getData_Disk(path);
+            getData_Disk(path);
             return n.data;
         }
     }
     
     //#AddedCode
-    public byte[] getData_Disk(String path, Stat stat, Watcher watcher) {
-    	String filePath = nodeLogDir + path + "/data";
-    	byte[] data = null;
+    public byte[] getData_Disk(String key) {
+    	String filePath = nodeLogDir + "/data.";
+    	//byte[] data = null;
     	if (!logNodeToFile) {
     		return null;
     	}
-    	
+    	byte[] tempkey = null;
     	try {
-    		FileInputStream input = new FileInputStream(filePath);
-    		input.read(data);
+       		byte fileData[] = new byte[numOfRows * keyLength]; 
+    		Integer chunk = (int) java.lang.Math.ceil(Long.parseLong(key) / (double) numOfRows) ;
+    		//Read existing data
+    		FileInputStream input = new FileInputStream(filePath + chunk.toString());
+    		input.read(fileData);
     		input.close();
-    		return data;
-    		//f.createNewFile();
+    		tempkey = new byte[keyLength];
+    		System.arraycopy(fileData,(int)( (Long.parseLong(key) - (chunk-1)*numOfRows - 1) * keyLength),tempkey,0, keyLength);
+    		System.out.println(new String (tempkey));
+    		//System.out.println(chunk + " " + (Integer.parseInt(new String(data)) - (chunk-1)*numOfRows - 1) * keyLength);
+
+    		//System.arraycopy(tempkey, 0, fileData, (int)((Long.parseLong(new String(data)) - (chunk-1)*numOfRows - 1) * keyLength), keyLength);
+    		
+    		
+    		//System.arraycopy(fileData, 599*keyLength, tempkey, 0, keyLength);
+    		//System.out.println(new String(tempkey));
+    		
+    		
+    		//FileOutputStream output = new FileOutputStream(new File(filePath + chunk.toString()));
+    		//output.write(fileData);
+    		//output.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Failed to open data file");
 			e.printStackTrace();
 		} 
-    	return null;
+    	return tempkey;
     }
 
     public Stat statNode(String path, Watcher watcher)
