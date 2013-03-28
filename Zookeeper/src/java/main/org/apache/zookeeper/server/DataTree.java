@@ -165,15 +165,14 @@ public class DataTree {
 
     public static String getDBRootPath() {
     	String rPath = null;
-    	String confPath = "/home/data/git/Zookeeper/Zookeeper/conf/zooDB.cfg";
-    	byte[] data = null;
+    	String confPath = new String("/home/data/git/Zookeeper/Zookeeper/conf/zooDB.cfg");
     	
     	try {
     		FileInputStream input = new FileInputStream(confPath);
-    		input.read(data);
+    		BufferedReader br = new BufferedReader(new InputStreamReader(input));
+    		rPath = br.readLine();
     		input.close();
     		//f.createNewFile();
-        	rPath = data.toString();
         	return rPath;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

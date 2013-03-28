@@ -26,5 +26,5 @@ public interface Info {
     public static final int MICRO=0;
     public static final String QUALIFIER=null;
     public static final int REVISION=-1;
-    public static final String BUILD_DATE="03/27/2013 06:23 GMT";
+    public static final String BUILD_DATE="03/28/2013 06:39 GMT";
 }

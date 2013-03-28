@@ -13,5 +13,5 @@ src/c/generated/
 src/java/lib/ant-eclipse-*
 src/java/lib/ivy-*
 conf/*
-src/java/generated/org/apache/zookeeper/version/Info.java
+src/java/generated/org/apache/zookeeper/version/Info*
 src/java/generated/.generated
