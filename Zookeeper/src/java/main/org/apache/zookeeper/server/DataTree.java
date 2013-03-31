@@ -691,7 +691,7 @@ public class DataTree {
             n.copyStat(s);
         }
         //#AddedCode
-        setData_Disk(path, data, version,zxid, time);
+        //setData_Disk(path, data, version,zxid, time);
         
         
         
