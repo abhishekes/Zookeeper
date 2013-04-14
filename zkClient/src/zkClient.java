@@ -17,24 +17,28 @@ public class zkClient implements Watcher{
 	}
 	
 	public static void main(String[] args) {
-        if (args.length > 1) {
+        if (args.length > 2) {
             System.err.println("USAGE: Executor hostPort  [args ...]");
             System.exit(2);
         }
         int[] distribution = new int[(int)(maxKey/10000) + 1];  
         System.out.println(distribution[10009]);
         String hostPort = args[0];
+        String hostPort1 = args[1];
         
         String znode = "/db1";
         //long key;
         
         
         zkClient zkClientObj = new zkClient();
+        zkClient zkClientObj1 = new zkClient();
         ZooKeeper zk = null;
-        int reads = 0, writes = 0;
+        ZooKeeper zk1 = null;
+        int reads = 0, writes = 1;
         byte[] tmp = null;
 		try {
 			zk = new ZooKeeper(hostPort, 30000, zkClientObj);
+			zk1 = new ZooKeeper(hostPort, 30000, zkClientObj1);
 			tmp = new String("db1").getBytes("UTF-16");
 			if (zk.exists(znode, null) == null) {
 				zk.create(znode, tmp, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -70,12 +74,12 @@ public class zkClient implements Watcher{
         	
         	String randKey = null;
         	byte[] retData = null;
-        	for (int  i = 0; i < 2500; i++) {
+        	for (int  i = 0; i < 3000; i++) {
 
         		randKey = zkClient.randKey();
         		distribution[(int)((Long.parseLong(randKey)/10000))] += 1;
         		
-        		if (Long.parseLong(randKey) % 3 == 0) {
+        		if (Long.parseLong(randKey) % 2 == 0) {
         			localStartTime = System.currentTimeMillis();
         			retData = zk.getDataByKey(znode, randKey);
         			totalReadTime += (System.currentTimeMillis() - localStartTime);
@@ -86,7 +90,7 @@ public class zkClient implements Watcher{
         		}else {
         			writes++;
         			localStartTime = System.currentTimeMillis();
-        			zk.setData(znode, randKey.getBytes(), -1);
+        			zk1.setData(znode, randKey.getBytes(), -1);
         			totalWriteTime += (System.currentTimeMillis() - localStartTime);
         		    
         		    
@@ -94,7 +98,7 @@ public class zkClient implements Watcher{
         		}
         		
         		if(i % 100 == 0 && reads  > 0 && writes > 0) {      			
-        			System.out.println(/*"Time : " + (System.currentTimeMillis() - startTime) + */ " Progress : " + (float) i/200+ " % " + " KeyValue:  " + new String(randKey) + " Reads : " +reads +  " Read latency : " + totalReadTime/(reads)+ " Writes : " + writes + " Write latency : " + totalWriteTime/(writes));
+        			System.out.println(" Progress : " + (float) i/30+ " % " + " KeyValue:  " + new String(randKey) + " Reads : " +reads  +  " Writes : " + writes +   " *** Read latency : "+ totalReadTime/(reads)+ " *** Write latency : " + totalWriteTime/(writes));
         		}
         		
         		//zk.setData(znode, tmp , 0);   
