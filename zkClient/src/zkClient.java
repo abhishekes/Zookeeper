@@ -38,7 +38,7 @@ public class zkClient implements Watcher{
         byte[] tmp = null;
 		try {
 			zk = new ZooKeeper(hostPort, 30000, zkClientObj);
-			zk1 = new ZooKeeper(hostPort, 30000, zkClientObj1);
+			zk1 = new ZooKeeper(hostPort1, 30000, zkClientObj1);
 			tmp = new String("db1").getBytes("UTF-16");
 			if (zk.exists(znode, null) == null) {
 				zk.create(znode, tmp, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
