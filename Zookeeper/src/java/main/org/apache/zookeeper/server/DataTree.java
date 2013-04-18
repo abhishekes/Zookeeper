@@ -90,7 +90,8 @@ public class DataTree {
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
   
     //#AddedCode : variable to control logging to disk
-    private static final boolean logNodeToFile = true; 
+    private static final boolean logNodeToFile = true;
+    static DB db=null;
     //Location of the temporary files.
     private static final String nodeLogDir = DataTree.getDBRootPath(); 
     private static final Integer keyLength = 32 ; //32 byte key length. Value is the same as key for now
@@ -720,9 +721,11 @@ public class DataTree {
 		}
 		Options options = new Options();
 		options.createIfMissing(true);
-		DB db = null;
+		//DB db = null;
 		try {
-			db = factory.open(new File(filePath), options);
+			if (db == null) {
+				db = factory.open(new File(filePath), options);
+			}
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -735,12 +738,12 @@ public class DataTree {
 		} finally {
 			// Make sure you close the db to shutdown the 
 			// database and avoid resource leaks.
-			try {
+			/*try {
 				db.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
 		}
 
 		//Read existing data from disk, update new data and write to disk
