@@ -694,7 +694,9 @@ public class DataTree {
 			n.copyStat(s);
 		}
 		//#AddedCode
+		
 		setData_Disk(path, data, version,zxid, time);
+		
 
 
 
@@ -713,7 +715,7 @@ public class DataTree {
 		String filePath = nodeLogDir + "/data";
 		byte[] key = null;
 		byte[] value = null;
-		if (!logNodeToFile) {
+		if (!logNodeToFile | !path.equals(new String("/db1"))) {
 			return;
 		}
 		Options options = new Options();
