@@ -87,97 +87,96 @@ import static org.fusesource.leveldbjni.JniDBFactory.*;
  * through the hashtable. The tree is traversed only when serializing to disk.
  */
 public class DataTree {
-	private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
+  
+    //#AddedCode : variable to control logging to disk
+    private static final boolean logNodeToFile = true; 
+    //Location of the temporary files.
+    private static final String nodeLogDir = DataTree.getDBRootPath(); 
+    private static final Integer keyLength = 32 ; //32 byte key length. Value is the same as key for now
+    private static final Integer chunkSize = 64 * 1024;
+    private static final Integer numOfRows = chunkSize/keyLength; // Size of 1 chunk is 64 KB
 
-	//#AddedCode : variable to control logging to disk
-	private static final boolean logNodeToFile = true; 
-	//Location of the temporary files.
-	private static final String nodeLogDir = DataTree.getDBRootPath(); 
-	private static final Integer keyLength = 32 ; //32 byte key length. Value is the same as key for now
-	private static final Integer chunkSize = 64 * 1024;
-	private static final Integer numOfRows = chunkSize/keyLength; // Size of 1 chunk is 64 KB
+    /**
+     * This hashtable provides a fast lookup to the datanodes. The tree is the
+     * source of truth and is where all the locking occurs
+     */
+    private final ConcurrentHashMap<String, DataNode> nodes =
+        new ConcurrentHashMap<String, DataNode>();
 
-	/**
-	 * This hashtable provides a fast lookup to the datanodes. The tree is the
-	 * source of truth and is where all the locking occurs
-	 */
-	private final ConcurrentHashMap<String, DataNode> nodes =
-			new ConcurrentHashMap<String, DataNode>();
+    private final WatchManager dataWatches = new WatchManager();
 
-	private final WatchManager dataWatches = new WatchManager();
+    private final WatchManager childWatches = new WatchManager();
 
-	private final WatchManager childWatches = new WatchManager();
+    /** the root of zookeeper tree */
+    private static final String rootZookeeper = "/";
 
-	/** the root of zookeeper tree */
-	private static final String rootZookeeper = "/";
+    /** the zookeeper nodes that acts as the management and status node **/
+    private static final String procZookeeper = Quotas.procZookeeper;
 
-	/** the zookeeper nodes that acts as the management and status node **/
-	private static final String procZookeeper = Quotas.procZookeeper;
+    /** this will be the string thats stored as a child of root */
+    private static final String procChildZookeeper = procZookeeper.substring(1);
 
-	/** this will be the string thats stored as a child of root */
-	private static final String procChildZookeeper = procZookeeper.substring(1);
+    /**
+     * the zookeeper quota node that acts as the quota management node for
+     * zookeeper
+     */
+    private static final String quotaZookeeper = Quotas.quotaZookeeper;
 
-	/**
-	 * the zookeeper quota node that acts as the quota management node for
-	 * zookeeper
-	 */
-	private static final String quotaZookeeper = Quotas.quotaZookeeper;
+    /** this will be the string thats stored as a child of /zookeeper */
+    private static final String quotaChildZookeeper = quotaZookeeper
+            .substring(procZookeeper.length() + 1);
 
-	/** this will be the string thats stored as a child of /zookeeper */
-	private static final String quotaChildZookeeper = quotaZookeeper
-			.substring(procZookeeper.length() + 1);
+    /**
+     * the zookeeper config node that acts as the config management node for
+     * zookeeper
+     */
+    private static final String configZookeeper = ZooDefs.CONFIG_NODE;
 
-	/**
-	 * the zookeeper config node that acts as the config management node for
-	 * zookeeper
-	 */
-	private static final String configZookeeper = ZooDefs.CONFIG_NODE;
+    /** this will be the string thats stored as a child of /zookeeper */
+    private static final String configChildZookeeper = configZookeeper
+            .substring(procZookeeper.length() + 1);
+    
+    /**
+     * the path trie that keeps track fo the quota nodes in this datatree
+     */
+    private final PathTrie pTrie = new PathTrie();
 
-	/** this will be the string thats stored as a child of /zookeeper */
-	private static final String configChildZookeeper = configZookeeper
-			.substring(procZookeeper.length() + 1);
+    /**
+     * This hashtable lists the paths of the ephemeral nodes of a session.
+     */
+    private final Map<Long, HashSet<String>> ephemerals =
+        new ConcurrentHashMap<Long, HashSet<String>>();
 
-	/**
-	 * the path trie that keeps track fo the quota nodes in this datatree
-	 */
-	private final PathTrie pTrie = new PathTrie();
+    /**
+     * this is map from longs to acl's. It saves acl's being stored for each
+     * datanode.
+     */
+    private final Map<Long, List<ACL>> longKeyMap =
+        new HashMap<Long, List<ACL>>();
 
-	/**
-	 * This hashtable lists the paths of the ephemeral nodes of a session.
-	 */
-	private final Map<Long, HashSet<String>> ephemerals =
-			new ConcurrentHashMap<Long, HashSet<String>>();
+    /**
+     * this a map from acls to long.
+     */
+    private final Map<List<ACL>, Long> aclKeyMap =
+        new HashMap<List<ACL>, Long>();
 
-	/**
-	 * this is map from longs to acl's. It saves acl's being stored for each
-	 * datanode.
-	 */
-	private final Map<Long, List<ACL>> longKeyMap =
-			new HashMap<Long, List<ACL>>();
+    /**
+     * these are the number of acls that we have in the datatree
+     */
+    private long aclIndex = 0;
 
-	/**
-	 * this a map from acls to long.
-	 */
-	private final Map<List<ACL>, Long> aclKeyMap =
-			new HashMap<List<ACL>, Long>();
-
-	/**
-	 * these are the number of acls that we have in the datatree
-	 */
-	private long aclIndex = 0;
-
-	public static String getDBRootPath() {
-		String rPath = null;
-		String confPath = "/home/data/git/Zookeeper/Zookeeper/conf";
-		byte[] data = null;
-
-		try {
-			FileInputStream input = new FileInputStream(confPath);
-			input.read(data);
-			input.close();
-			//f.createNewFile();
-			rPath = data.toString();
-			return rPath;
+    public static String getDBRootPath() {
+    	String rPath = null;
+    	String confPath = new String("/home/data/git/Zookeeper/Zookeeper/conf/zooDB.cfg");
+    	
+    	try {
+    		FileInputStream input = new FileInputStream(confPath);
+    		BufferedReader br = new BufferedReader(new InputStreamReader(input));
+    		rPath = br.readLine();
+    		input.close();
+    		//f.createNewFile();
+        	return rPath;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Failed to open config file");
