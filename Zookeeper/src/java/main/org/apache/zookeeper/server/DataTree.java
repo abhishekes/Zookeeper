@@ -170,11 +170,18 @@ public class DataTree {
     public static String getDBRootPath() {
     	String rPath = null;
     	String confPath = new String("conf/zooDB.cfg");
+    	try {
+			System.out.println("Path : " + new java.io.File( "." ).getCanonicalPath());
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
     	
     	try {
     		FileInputStream input = new FileInputStream(confPath);
     		BufferedReader br = new BufferedReader(new InputStreamReader(input));
     		rPath = br.readLine();
+    		System.out.println("R Path : " + rPath);
     		input.close();
     		//f.createNewFile();
         	return rPath;
