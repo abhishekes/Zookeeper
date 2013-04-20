@@ -862,10 +862,13 @@ public class DataTree {
 			Options options = new Options();
 			options.createIfMissing(true);
 			
-			DB db = null;
-			db = factory.open(new File(filePath), options);
+			//DB db = null;
+			if (db == null) {
+				db = factory.open(new File(filePath), options);
+			}
+			//db = factory.open(new File(filePath), options);
 			tempkey = db.get(key.getBytes());
-			db.close();
+			//db.close();
 			/*byte fileData[] = new byte[numOfRows * keyLength]; 
 			Integer chunk = (int) java.lang.Math.ceil(Long.parseLong(key) / (double) numOfRows) ;
 			//Read existing data
