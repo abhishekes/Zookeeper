@@ -1,6 +1,7 @@
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.apache.zookeeper.*;
@@ -10,6 +11,18 @@ import org.slf4j.*;
 
 
 public class zkClient implements Watcher{
+	static final String[] machines = {"172.22.138.16", "172.22.138.18", "172.22.138.52"};
+	static final String[] ports = {"12182", "22181", "32181"};
+	
+	/**
+	 * 2D array of dimensions 3*3
+	 * each row stands for the replica for which client wants to send read/write request
+	 * 1st column in each row stands for the replica which is on SSD
+	 * 2nd and 3rd columns are for HDD replicas
+	 */
+	private ZooKeeper[][] paxosInstances = new ZooKeeper[3][3];
+	
+	
 	static long HKey = 0;
 	static long LKey = 0;
 	static final long maxKey = 268435456;		//hex - 10000000
@@ -81,7 +94,7 @@ public class zkClient implements Watcher{
         	byte[] retData = null;
         	ByteArrayOutputStream bOut = new ByteArrayOutputStream(100);
         	
-        	for (int  i = 0; i < maxKey; i++) {
+        	for (int  i = 0; i < 10; i++) {
 
         		LKey++;
         		randKey = String.valueOf(HKey) + String.valueOf(LKey);
