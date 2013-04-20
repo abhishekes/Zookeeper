@@ -1,4 +1,6 @@
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Arrays;
 
 import org.apache.zookeeper.*;
@@ -8,7 +10,10 @@ import org.slf4j.*;
 
 
 public class zkClient implements Watcher{
-	static final long maxKey = 268435456;
+	static long HKey = 0;
+	static long LKey = 0;
+	static final long maxKey = 268435456;		//hex - 10000000
+	//static final long maxKey = ;		//hex - 10000000
 	
 	public static String randKey() {
 		long randomKey;
@@ -22,26 +27,26 @@ public class zkClient implements Watcher{
             System.exit(2);
         }
         int[] distribution = new int[(int)(maxKey/10000) + 1];  
-        System.out.println(distribution[10009]);
-        String hostPort = args[0];
-        String hostPort1 = args[1];
+        //System.out.println(distribution[10009]);
+        String hostPort1 = args[0];
+        String hostPort2 = args[1];
         
         String znode = "/db1";
         //long key;
         
         
-        zkClient zkClientObj = new zkClient();
         zkClient zkClientObj1 = new zkClient();
-        ZooKeeper zk = null;
+        zkClient zkClientObj2 = new zkClient();
         ZooKeeper zk1 = null;
+        ZooKeeper zk2 = null;
         int reads = 0, writes = 1;
         byte[] tmp = null;
 		try {
-			zk = new ZooKeeper(hostPort, 30000, zkClientObj);
 			zk1 = new ZooKeeper(hostPort1, 30000, zkClientObj1);
+			zk2 = new ZooKeeper(hostPort2, 30000, zkClientObj2);
 			tmp = new String("db1").getBytes("UTF-16");
-			if (zk.exists(znode, null) == null) {
-				zk.create(znode, tmp, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			if (zk2.exists(znode, null) == null) {
+				zk2.create(znode, tmp, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			}
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
@@ -74,11 +79,37 @@ public class zkClient implements Watcher{
         	
         	String randKey = null;
         	byte[] retData = null;
-        	for (int  i = 0; i < 3000; i++) {
+        	ByteArrayOutputStream bOut = new ByteArrayOutputStream(100);
+        	
+        	for (int  i = 0; i < maxKey; i++) {
 
-        		randKey = zkClient.randKey();
-        		distribution[(int)((Long.parseLong(randKey)/10000))] += 1;
+        		LKey++;
+        		randKey = String.valueOf(HKey) + String.valueOf(LKey);
+        		bOut.reset();
+        		bOut.write(randKey.getBytes());
         		
+        		byte[] key = randKey.getBytes();
+        		byte[] value = bOut.toByteArray();
+        		
+        		byte[] c = new byte[116];
+        		Arrays.fill(c, (byte)'0');
+        		
+        		System.arraycopy(key, 0, c, 16-key.length, key.length);
+        		System.arraycopy(value, 0, c, 116-value.length, value.length);
+        		
+        		localStartTime = System.currentTimeMillis();
+    			zk2.setData(znode, c, -1);
+    			totalWriteTime += (System.currentTimeMillis() - localStartTime);        		
+    			writes++;
+    			
+    			
+    			
+        		if(i % 100 == 0 && writes > 0) {      			
+        			System.out.println(" Progress : " + (float) i*100/maxKey+ " % " + " KeyValue:  " + new String(c) + " KeyValueLength:  " + c.length + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
+        		}
+        		//randKey = zkClient.randKey();
+        		//distribution[(int)((Long.parseLong(randKey)/10000))] += 1;
+        		/*
         		if (Long.parseLong(randKey) % 2 == 0) {
         			localStartTime = System.currentTimeMillis();
         			retData = zk.getDataByKey(znode, randKey);
@@ -99,15 +130,16 @@ public class zkClient implements Watcher{
         		
         		if(i % 100 == 0 && reads  > 0 && writes > 0) {      			
         			System.out.println(" Progress : " + (float) i/30+ " % " + " KeyValue:  " + new String(randKey) + " Reads : " +reads  +  " Writes : " + writes +   " *** Read latency : "+ totalReadTime/(reads)+ " *** Write latency : " + totalWriteTime/(writes));
-        		}
+        		}*/
         		
         		//zk.setData(znode, tmp , 0);   
         		//byte[] tmp1 = zk.getData(znode, false, null);
         		//System.out.println("Output:" + new String(tmp1,"UTF-16"));
         	}
         	System.out.println("Total Time : " + (System.currentTimeMillis() - startTime));
-        	System.out.println(Arrays.toString(distribution));
-        	System.out.println(" Reads : "+ reads+ " Total Read Time : "  + totalReadTime + "\nWrites : "+ writes +" Total Write Time : "  + totalWriteTime);
+        	//System.out.println(Arrays.toString(distribution));
+        	//System.out.println(" Reads : "+ reads+ " Total Read Time : "  + totalReadTime + "\nWrites : "+ writes +" Total Write Time : "  + totalWriteTime);
+        	System.out.println("\nWrites : "+ writes +" Total Write Time : "  + totalWriteTime);
         } catch (Exception e) {
             e.printStackTrace();
         }
