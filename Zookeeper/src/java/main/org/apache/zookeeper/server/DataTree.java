@@ -169,7 +169,7 @@ public class DataTree {
 
     public static String getDBRootPath() {
     	String rPath = null;
-    	String confPath = new String("conf/zooDB.cfg");
+    	String confPath = new String("../conf/zooDB.cfg");
     	try {
 			System.out.println("Path : " + new java.io.File( "." ).getCanonicalPath());
 		} catch (IOException e1) {
