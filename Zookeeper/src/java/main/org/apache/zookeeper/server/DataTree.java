@@ -169,7 +169,7 @@ public class DataTree {
 
     public static String getDBRootPath() {
     	String rPath = null;
-    	String confPath = new String("/home/data/git/Zookeeper/Zookeeper/conf/zooDB.cfg");
+    	String confPath = new String("conf/zooDB.cfg");
     	
     	try {
     		FileInputStream input = new FileInputStream(confPath);
@@ -721,6 +721,7 @@ public class DataTree {
 		}
 		Options options = new Options();
 		options.createIfMissing(true);
+		
 		//DB db = null;
 		try {
 			if (db == null) {
