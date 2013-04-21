@@ -723,7 +723,7 @@ public class DataTree {
 		String filePath = nodeLogDir + "/data";
 		byte[] key = null;
 		byte[] value = null;
-		if (!logNodeToFile | !path.equals(new String("/db1"))) {
+		if (!logNodeToFile | !path.contains(new String("/db"))) {
 			return;
 		}
 		Options options = new Options();
