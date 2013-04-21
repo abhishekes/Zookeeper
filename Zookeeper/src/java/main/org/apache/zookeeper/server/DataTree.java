@@ -869,7 +869,7 @@ public class DataTree {
 			}
 			//db = factory.open(new File(filePath), options);
 			tempkey = db.get(key.getBytes());
-			System.out.println("********* Key :" + new String(key.getBytes()) + " Value : " + new String(tempkey));
+			System.out.println("*********Read Key :" + new String(key.getBytes()) /*+ " Value : " + new String(tempkey)*/);
 			//db.close();
 			/*byte fileData[] = new byte[numOfRows * keyLength]; 
 			Integer chunk = (int) java.lang.Math.ceil(Long.parseLong(key) / (double) numOfRows) ;
