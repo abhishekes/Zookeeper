@@ -94,7 +94,7 @@ public class zkClient implements Watcher{
         	byte[] retData = null;
         	ByteArrayOutputStream bOut = new ByteArrayOutputStream(100);
         	
-        	for (int  i = 0; i < 10; i++) {
+        	for (int  i = 0; i < maxKey; i++) {
 
         		LKey++;
         		randKey = String.valueOf(HKey) + String.valueOf(LKey);
@@ -116,8 +116,7 @@ public class zkClient implements Watcher{
     			writes++;
     			
     			
-    			
-        		if(i % 100 == 0 && writes > 0) {      			
+        		if(i % 100 == 0) {      			
         			System.out.println(" Progress : " + (float) i*100/maxKey+ " % " + " KeyValue:  " + new String(c) + " KeyValueLength:  " + c.length + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
         		}
         		//randKey = zkClient.randKey();

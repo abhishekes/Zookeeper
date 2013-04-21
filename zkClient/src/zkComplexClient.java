@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.apache.zookeeper.*;
+import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.slf4j.*;
 
@@ -127,59 +128,78 @@ public class zkComplexClient implements Watcher{
         	byte[] retData = null;
         	ByteArrayOutputStream bOut = new ByteArrayOutputStream(100);
         	
-        	while(true) {
-        		ZooKeeper zkFinal = null;
-        		randKey = randKey();
-        		operation = randOperation(readWritePercentage);
-        		Collections.shuffle(replicas);
-        		int randomPartition = replicas.get(0).intValue();
-        		//LKey++;
-        		//randKey = String.valueOf(HKey) + String.valueOf(LKey);
-        		
-        		bOut.reset();
-        		bOut.write(randKey.getBytes());
-        		
-        		byte[] key = randKey.getBytes();
-        		byte[] value = bOut.toByteArray();
-        		
-        		byte[] c = new byte[116];
-        		Arrays.fill(c, (byte)'0');
-        		
-        		System.arraycopy(key, 0, c, 16-key.length, key.length);
-        		System.arraycopy(value, 0, c, 116-value.length, value.length);
-        		
-        		
-        		if(operation.equals("READ")) {
-        			zkFinal = paxosInstances[randomPartition-1][0];
-        			localStartTime = System.currentTimeMillis();
-        			retData = zkFinal.getDataByKey(znodes[randomPartition-1], randKey);
-        			totalReadTime += (System.currentTimeMillis() - localStartTime);        			
-        			reads++;
-        			
-        			System.out.println(" Key : " + randKey + "from Partition : " + randomPartition + "Reads : " + reads + " *** read latency : " + totalReadTime/(reads));
-        		} else if(operation.equals("WRITE")) {
-        			if(Math.random() < 0.5) {
-        				zkFinal = paxosInstances[randomPartition-1][1];
-        			} else {
-        				zkFinal = paxosInstances[randomPartition-1][2];
-        			}
-            		localStartTime = System.currentTimeMillis();
-        			zkFinal.setData(znodes[randomPartition-1], c, -1);
-        			totalWriteTime += (System.currentTimeMillis() - localStartTime);        		
-        			writes++;
-        			
-        			System.out.println(" KeyValue:  " + new String(c) + " KeyValueLength:  " + c.length + "in Partition : " + randomPartition + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
-        		}
-        		counter++;
-        	
-            	
+    		byte[] lastWrittenKey = new byte[16];//TEMP
+    		Arrays.fill(lastWrittenKey, (byte)'0');//TEMP
+    		while(true) {
+    			
+    			ZooKeeper zkFinal = null;
+    			randKey = randKey();
+    			operation = randOperation(readWritePercentage);
+    			Collections.shuffle(replicas);
+    			int randomPartition = replicas.get(0).intValue();
+    			//LKey++;
+    			//randKey = String.valueOf(HKey) + String.valueOf(LKey);
+
+    			bOut.reset();
+    			bOut.write(randKey.getBytes());
+
+    			byte[] key = randKey.getBytes();
+    			byte[] value = bOut.toByteArray();
+
+    			byte[] forGetData = new byte[16];
+    			byte[] forSetData = new byte[116];
+    			Arrays.fill(forSetData, (byte)'0');
+    			Arrays.fill(forGetData, (byte)'0');
+
+    			System.arraycopy(key, 0, forSetData, 16-key.length, key.length);
+    			System.arraycopy(value, 0, forSetData, 116-value.length, value.length);
+    			System.arraycopy(key, 0, forGetData, 16-key.length, key.length);
+    			try {
+    				if(operation.equals("READ")) {
+    					zkFinal = paxosInstances[randomPartition-1][0];
+    					localStartTime = System.currentTimeMillis();
+
+    					//System.out.println("TESTING" + new String(lastWrittenKey) +" "+ new String(forGetData));
+    					retData = zkFinal.getDataByKey(znodes[randomPartition-1], new String(forGetData));
+    					totalReadTime += (System.currentTimeMillis() - localStartTime);        			
+    					reads++;
+
+    					System.out.println(" Key : " + new String(forGetData) + ", from Partition : " + randomPartition + /*" Read Value - " + new String(retData) + */", Reads : " + reads + " *** read latency : " + totalReadTime/(reads));
+    				} else if(operation.equals("WRITE")) {
+    					if(Math.random() < 0.5) {
+    						zkFinal = paxosInstances[randomPartition-1][1];
+    					} else {
+    						zkFinal = paxosInstances[randomPartition-1][2];
+    					}
+    					localStartTime = System.currentTimeMillis();
+    					zkFinal.setData(znodes[randomPartition-1], forSetData, -1);
+    					totalWriteTime += (System.currentTimeMillis() - localStartTime);        		
+    					writes++;
+
+    					Arrays.fill(lastWrittenKey, (byte)'0');//TEMP
+    					System.arraycopy(forSetData, 0, lastWrittenKey, 0, 16);//TEMP
+    					System.out.println("lastwrittenKey - "+new String(lastWrittenKey));
+    					System.out.println(" KeyValue:  " + new String(forSetData) + " KeyValueLength:  " + forSetData.length + "in Partition : " + randomPartition + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
+
+    					//TEMP
+    					forGetData = lastWrittenKey;
+    					retData = zkFinal.getDataByKey(znodes[randomPartition-1], new String(forGetData));
+    					reads++;
+    					System.out.println(" Key : " + new String(forGetData) + ", from Partition : " + randomPartition + " Read Value - " + new String(retData) + ", Reads : " + reads + " *** read latency : " + totalReadTime/(reads));			
+    				}
+    				counter++;
+
+    			} catch (ConnectionLossException e) {
+    				System.err.println("ConnectionLossException recved for PaxosInstance - ");
+    				e.printStackTrace();
+    			}
         		if(counter % 100 == 0 && writes > 0) {      			
         			//System.out.println(" Progress : " + (float) i*100/maxKey+ " % " + " KeyValue:  " + new String(c) + " KeyValueLength:  " + c.length + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
         			System.out.println("Total Time : " + (System.currentTimeMillis() - startTime));
         			System.out.println("Reads : " + reads + "Total Read Time : " + totalReadTime + "Writes :" + writes +" Total Write Time : "  + totalWriteTime);
         		}
- 
-        		if(counter == 10)
+        		
+        		if(counter == 100)
         			break;
         	}
 
@@ -188,6 +208,24 @@ public class zkComplexClient implements Watcher{
         }
     }
 
+	
+	void close() {
+		int i = 0;
+		int j = 0;
+		for(; i < 3; i++) {
+			j = 0;
+			for(; j < 3; j++) {
+				try {
+					paxosInstances[i][j].close();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}	
+	}
+	
+	
 	@Override
 	public void process(WatchedEvent event) {
 		// TODO Auto-generated method stub
@@ -205,5 +243,6 @@ public class zkComplexClient implements Watcher{
        
         zkObj.runReadWriteLoad(readWritePercentage);
 
+        zkObj.close();
 	}
 }
