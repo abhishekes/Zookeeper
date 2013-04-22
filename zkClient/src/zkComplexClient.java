@@ -1,7 +1,8 @@
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +12,8 @@ import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.slf4j.*;
 
+import java.io.File;
+import java.io.FileOutputStream;
 
 
 public class zkComplexClient implements Watcher{
@@ -18,7 +21,8 @@ public class zkComplexClient implements Watcher{
 	static final String[] machines = {"172.22.138.16", "172.22.138.18", "172.22.138.52"};
 	static final String[] ports = {"12181", "22181", "32181"};
 	static final String[] znodes = {"/db1", "/db2", "/db3"};
-	
+	//BufferedWriter logger;
+	String logFileName;
 	/**
 	 * 2D array of dimensions 3*3
 	 * each row stands for the replica for which client wants to send read/write request
@@ -26,6 +30,7 @@ public class zkComplexClient implements Watcher{
 	 * 2nd and 3rd columns are for HDD replicas
 	 */
 	private ZooKeeper[][] paxosInstances = new ZooKeeper[3][3];
+	private int noOfOps;
 	
 	static long HKey = 0;
 	static long LKey = 0;
@@ -43,6 +48,36 @@ public class zkComplexClient implements Watcher{
 			return "READ";
 		} else {
 			return "WRITE";
+		}
+	}
+	
+	private BufferedWriter getLoggerHandle() {
+		
+		File logFile = new File(this.logFileName);
+		FileWriter fop = null;
+		BufferedWriter out = null;
+		try {
+			// if file doesn't exists, then create it
+			if (!logFile.exists()) {
+				logFile.createNewFile();
+			}
+			fop = new FileWriter(logFile, false);
+			out = new BufferedWriter(fop);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return out;		
+	}
+	
+	private void closeLoggerHandle(BufferedWriter logger) {
+		
+		try {
+			logger.flush();
+			logger.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	
@@ -115,14 +150,17 @@ public class zkComplexClient implements Watcher{
         	long totalWriteTime = 0;
         	
         	long counter = 0;
-        	long readMin = 0;
+        	/*long readMin = 0;
         	long writeMin = 0;
         	long readMax = 0;
-        	long writeMax = 0;
+        	long writeMax = 0;*/
         	
         	String operation;
         	
         	System.out.println("Start Time : " + startTime);
+        	BufferedWriter logger = getLoggerHandle();
+        	logger.write("********************** START TIME: " + startTime + " ***********************\n");
+        	closeLoggerHandle(logger);
         	
         	String randKey = null;
         	byte[] retData = null;
@@ -164,7 +202,7 @@ public class zkComplexClient implements Watcher{
     					totalReadTime += (System.currentTimeMillis() - localStartTime);        			
     					reads++;
 
-    					System.out.println(" Key : " + new String(forGetData) + ", from Partition : " + randomPartition + /*" Read Value - " + new String(retData) + */", Reads : " + reads + " *** read latency : " + totalReadTime/(reads));
+    					//System.out.println(" Key : " + new String(forGetData) + ", from Partition : " + randomPartition + /*" Read Value - " + new String(retData) + */", Reads : " + reads + " *** read latency : " + totalReadTime/(reads));
     				} else if(operation.equals("WRITE")) {
     					if(Math.random() < 0.5) {
     						zkFinal = paxosInstances[randomPartition-1][1];
@@ -176,16 +214,11 @@ public class zkComplexClient implements Watcher{
     					totalWriteTime += (System.currentTimeMillis() - localStartTime);        		
     					writes++;
 
-    					Arrays.fill(lastWrittenKey, (byte)'0');//TEMP
-    					System.arraycopy(forSetData, 0, lastWrittenKey, 0, 16);//TEMP
-    					System.out.println("lastwrittenKey - "+new String(lastWrittenKey));
-    					System.out.println(" KeyValue:  " + new String(forSetData) + " KeyValueLength:  " + forSetData.length + "in Partition : " + randomPartition + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
+    					//Arrays.fill(lastWrittenKey, (byte)'0');//TEMP
+    					//System.arraycopy(forSetData, 0, lastWrittenKey, 0, 16);//TEMP
+    					//System.out.println("lastwrittenKey - "+new String(lastWrittenKey));
+    					//System.out.println(" KeyValue:  " + new String(forSetData) + " KeyValueLength:  " + forSetData.length + "in Partition : " + randomPartition + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
 
-    					//TEMP
-    					forGetData = lastWrittenKey;
-    					retData = zkFinal.getDataByKey(znodes[randomPartition-1], new String(forGetData));
-    					reads++;
-    					System.out.println(" Key : " + new String(forGetData) + ", from Partition : " + randomPartition + " Read Value - " + new String(retData) + ", Reads : " + reads + " *** read latency : " + totalReadTime/(reads));			
     				}
     				counter++;
 
@@ -193,14 +226,30 @@ public class zkComplexClient implements Watcher{
     				System.err.println("ConnectionLossException recved for PaxosInstance - ");
     				e.printStackTrace();
     			}
-        		if(counter % 100 == 0 && writes > 0) {      			
+        		if(counter % 1000 == 0) {
+        			logger = getLoggerHandle();
         			//System.out.println(" Progress : " + (float) i*100/maxKey+ " % " + " KeyValue:  " + new String(c) + " KeyValueLength:  " + c.length + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
-        			System.out.println("Total Time : " + (System.currentTimeMillis() - startTime));
-        			System.out.println("Reads : " + reads + "Total Read Time : " + totalReadTime + "Writes :" + writes +" Total Write Time : "  + totalWriteTime);
+        			System.out.println("READS: " + reads + " TOTAL READ TIME: " + totalReadTime + " WRITES:" + writes + " TOTAL WRITE TIME: "  + totalWriteTime + " TOTAL TIME: " + (System.currentTimeMillis() - startTime));
+        			logger.write("READS: " + reads + "; TOTAL READ TIME: " + totalReadTime + "; WRITES:" + writes + "; TOTAL WRITE TIME: "  + totalWriteTime + "; TOTAL TIME: " + (System.currentTimeMillis() - startTime));
+        			//logger.newLine();
+        			logger.write("; READ LATENCY: " + totalReadTime/(reads));
+        			//logger.newLine();
+        			logger.write("; WRITE LATENCY: " + totalWriteTime/(writes));
+        			logger.newLine();
+        			closeLoggerHandle(logger);
         		}
         		
-        		if(counter == 100)
+        		if(counter == noOfOps) {
+        			logger = getLoggerHandle();
+        			logger.write("READS: " + reads + "; TOTAL READ TIME: " + totalReadTime + "; WRITES:" + writes + "; TOTAL WRITE TIME: "  + totalWriteTime + "; TOTAL TIME: " + (System.currentTimeMillis() - startTime));
+        			//logger.newLine();
+        			logger.write("; READ LATENCY: " + totalReadTime/(reads));
+        			//logger.newLine();
+        			logger.write("; WRITE LATENCY: " + totalWriteTime/(writes));
+        			logger.newLine();
+        			closeLoggerHandle(logger);
         			break;
+        		}
         	}
 
         } catch (Exception e) {
@@ -235,12 +284,21 @@ public class zkComplexClient implements Watcher{
 	
 	public static void main(String[] args) {
 		
+		if(args.length < 3) {
+			System.out.println("USAGE: <program> <workloadDescription> <logFilePath> <noOfOps>");
+			return;
+		}
 		
 		float readWritePercentage = Float.parseFloat(args[0]);
 		System.out.println("The user given load type is - "+String.valueOf(readWritePercentage));
+	
+		String logFileName = args[1];
+
 		
         zkComplexClient zkObj = initializeZKClient();
-       
+        zkObj.logFileName = logFileName;
+        zkObj.noOfOps = Integer.parseInt(args[2]);
+        
         zkObj.runReadWriteLoad(readWritePercentage);
 
         zkObj.close();
