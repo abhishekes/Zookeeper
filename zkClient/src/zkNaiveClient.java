@@ -16,7 +16,7 @@ import java.io.File;
 
 
 public class zkNaiveClient implements Watcher{
-	boolean genericRandomize = true;
+	boolean genericRandomize = false;
 	public ArrayList<Integer> replicas = new ArrayList<Integer>();
 	static final String[] machines = {"172.22.138.16", "172.22.138.18", "172.22.138.52"};
 	static final String[] ports = {"12181", "22181", "32181"};
@@ -96,8 +96,8 @@ public class zkNaiveClient implements Watcher{
 
 			for(; i < 3; i++) {
 				if(zkObj.genericRandomize) {
-					int randRep = (int)Math.floor((Math.random() * (machines.length + 1)));
-					System.out.println("randRep decided for replica no - " + i + " is - " + randRep);
+					int randRep = (int)Math.floor((Math.random() * machines.length));
+					System.out.println("randRep decided for replica no - " + i+1 + " is - " + randRep);
 					
 					hostPort = machines[randRep]+":"+ports[i];
 					readWrite = new ZooKeeper(hostPort, 30000, zkObj);
@@ -107,7 +107,7 @@ public class zkNaiveClient implements Watcher{
 						readWrite.create(znodes[i], tmp, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 					}
 					zkObj.paxosInstances[i] = readWrite;
-					System.out.println("ZooKeeper connection for replica - (" + i +") " + "established with :" + hostPort);
+					System.out.println("ZooKeeper connection for replica - (" + i+1 +") " + "established with :" + hostPort);
 				} else {
 					boolean selectNext = false;
 					for(j = 0; j < 3; j++) {
@@ -115,8 +115,8 @@ public class zkNaiveClient implements Watcher{
 							if(Math.random() < 0.5 || selectNext) {
 								hostPort = machines[j]+":"+ports[i];
 								readWrite = new ZooKeeper(hostPort, 30000, zkObj);
-								zkObj.paxosInstances[k] = readWrite;
-								System.out.println("ZooKeeper connection for replica - ( " + i +" ) "+ "established with :" + hostPort);
+								zkObj.paxosInstances[i] = readWrite;
+								System.out.println("ZooKeeper connection for replica - ( " + i+1 +" ) "+ "established with :" + hostPort);
 								break;
 							} else {
 								selectNext = true;
@@ -285,7 +285,7 @@ public class zkNaiveClient implements Watcher{
 	}
 	
 	
-	@Override
+	//@Override
 	public void process(WatchedEvent event) {
 		// TODO Auto-generated method stub
 
