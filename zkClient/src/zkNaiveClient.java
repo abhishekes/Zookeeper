@@ -13,7 +13,6 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.slf4j.*;
 
 import java.io.File;
-import java.io.FileOutputStream;
 
 
 public class zkNaiveClient implements Watcher{
@@ -97,8 +96,8 @@ public class zkNaiveClient implements Watcher{
 
 			for(; i < 3; i++) {
 				if(zkObj.genericRandomize) {
-					int randRep = (int)(Math.random() * (machines.length + 1));
-					System.out.println("Random replica decided for replica no - " + i + " is - " + machines[randRep]);
+					int randRep = (int)Math.floor((Math.random() * (machines.length + 1)));
+					System.out.println("randRep decided for replica no - " + i + " is - " + randRep);
 					
 					hostPort = machines[randRep]+":"+ports[i];
 					readWrite = new ZooKeeper(hostPort, 30000, zkObj);
@@ -110,7 +109,6 @@ public class zkNaiveClient implements Watcher{
 					zkObj.paxosInstances[i] = readWrite;
 					System.out.println("ZooKeeper connection for replica - (" + i +") " + "established with :" + hostPort);
 				} else {
-					k = 1;
 					boolean selectNext = false;
 					for(j = 0; j < 3; j++) {
 						if(j != i) {
