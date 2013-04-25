@@ -35,8 +35,8 @@ public class zkNaiveClient implements Watcher{
 	
 	static long HKey = 0;
 	static long LKey = 0;
-	static final long maxKey = 268435456;		//hex - 10000000
-	//static final long maxKey = ;		//hex - 10000000
+	//static final long maxKey = 268435456;		//hex - 10000000
+	static final long maxKey = 80000001;		//hex - 10000000 //TEMP
 	
 	public static String randKey() {
 		long randomKey;
@@ -90,7 +90,7 @@ public class zkNaiveClient implements Watcher{
 		zkObj.replicas.add(2, new Integer(3));
 		
 		ZooKeeper readWrite = null;
-		int i = 0, j = 0, k = 1;
+		int i = 0, j = 0;
 		String hostPort;
 		try {
 
@@ -179,7 +179,7 @@ public class zkNaiveClient implements Watcher{
     		byte[] lastWrittenKey = new byte[16];//TEMP
     		Arrays.fill(lastWrittenKey, (byte)'0');//TEMP
     		while(true) {
-    			
+    			retData = null;
     			ZooKeeper zkFinal = null;
     			randKey = randKey();
     			operation = randOperation(readWritePercentage);
@@ -212,7 +212,10 @@ public class zkNaiveClient implements Watcher{
     					totalReadTime += (System.currentTimeMillis() - localStartTime);        			
     					reads++;
 
-    					//System.out.println(" Key : " + new String(forGetData) + ", from Partition : " + randomPartition + /*" Read Value - " + new String(retData) + */", Reads : " + reads + " *** read latency : " + totalReadTime/(reads));
+    					System.out.println(" Key : " + new String(forGetData) + ", from Partition : " + randomPartition + " Read Value - " + /*new String(retData) + */", Reads : " + reads + " *** read latency : " + totalReadTime/(reads));
+    					if(retData == null) {
+    						System.err.println("******************** retData is null ****************");
+    					}
     				} else if(operation.equals("WRITE")) {
     					if(Math.random() < 0.5) {
     						zkFinal = paxosInstances[randomPartition-1];
@@ -227,7 +230,7 @@ public class zkNaiveClient implements Watcher{
     					//Arrays.fill(lastWrittenKey, (byte)'0');//TEMP
     					//System.arraycopy(forSetData, 0, lastWrittenKey, 0, 16);//TEMP
     					//System.out.println("lastwrittenKey - "+new String(lastWrittenKey));
-    					//System.out.println(" KeyValue:  " + new String(forSetData) + " KeyValueLength:  " + forSetData.length + "in Partition : " + randomPartition + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
+    					System.out.println(" KeyValue:  " + new String(forSetData) + " KeyValueLength:  " + forSetData.length + "in Partition : " + randomPartition + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
 
     				}
     				counter++;
