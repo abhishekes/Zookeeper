@@ -212,7 +212,7 @@ public class zkNaiveClient implements Watcher{
     					totalReadTime += (System.currentTimeMillis() - localStartTime);        			
     					reads++;
 
-    					System.out.println(" Key : " + new String(forGetData) + ", from Partition : " + randomPartition + " Read Value - " + /*new String(retData) + */", Reads : " + reads + " *** read latency : " + totalReadTime/(reads));
+    					//System.out.println(" Key : " + new String(forGetData) + ", from Partition : " + randomPartition + /*" Read Value - " + new String(retData) + */", Reads : " + reads + " *** read latency : " + totalReadTime/(reads));
     					if(retData == null) {
     						System.err.println("******************** retData is null ****************");
     					}
@@ -230,7 +230,7 @@ public class zkNaiveClient implements Watcher{
     					//Arrays.fill(lastWrittenKey, (byte)'0');//TEMP
     					//System.arraycopy(forSetData, 0, lastWrittenKey, 0, 16);//TEMP
     					//System.out.println("lastwrittenKey - "+new String(lastWrittenKey));
-    					System.out.println(" KeyValue:  " + new String(forSetData) + " KeyValueLength:  " + forSetData.length + "in Partition : " + randomPartition + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
+    					//System.out.println(" KeyValue:  " + new String(forSetData) + " KeyValueLength:  " + forSetData.length + "in Partition : " + randomPartition + " Writes : " + writes + " *** Write latency : " + totalWriteTime/(writes));
 
     				}
     				counter++;
