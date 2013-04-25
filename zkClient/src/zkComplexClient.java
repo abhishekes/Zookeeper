@@ -35,7 +35,7 @@ public class zkComplexClient implements Watcher{
 	static long HKey = 0;
 	static long LKey = 0;
 	//static final long maxKey = 268435456;		//hex - 10000000
-	static final long maxKey = 80000001;		//hex - 10000000
+	static final long maxKey = 53687090;		//hex - 10000000   //TEMP
 	
 	public static String randKey() {
 		long randomKey;
