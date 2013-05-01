@@ -90,7 +90,7 @@ public class DataTree {
 	private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
 
 	//#AddedCode : variable to control logging to disk
-	private static final boolean logNodeToFile = true;
+	private static final boolean logNodeToFile = false;
 	static DB db=null;
 	//Location of the temporary files.
 	private static final String nodeLogDir = DataTree.getDBRootPath(); 
