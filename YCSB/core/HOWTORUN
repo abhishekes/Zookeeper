@@ -1,0 +1,6 @@
+// For loading db
+java -jar ycsb_client.jar -P ../workloads/workloadzktemp -load -db com.yahoo.ycsb.ZKDB
+
+
+// For running operations
+java -jar ycsb_client.jar -P ../workloads/workloadzktemp -t -db com.yahoo.ycsb.ZKDB
