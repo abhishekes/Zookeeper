@@ -93,7 +93,6 @@ public class zkNaiveClient implements Watcher{
 		int i = 0, j = 0;
 		String hostPort;
 		try {
-
 			for(; i < 3; i++) {
 				if(zkObj.genericRandomize) {
 					int randRep = (int)Math.floor((Math.random() * machines.length));

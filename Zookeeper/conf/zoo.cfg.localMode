@@ -1,0 +1,4 @@
+tickTime=2000
+dataDir=/home/mayur/mydata/Zookeeper/Zookeeper
+clientPort=2181
+

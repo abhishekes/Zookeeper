@@ -1,4 +1,12 @@
-
+/*
+ * Difference between Complex and Naive Clients:
+ * 		Complex Client:
+ * 			Writes:	Leader
+ * 			Read: SSD
+ * 		Naive Client:
+ * 			Writes: Leader
+ * 			Read: Round Robin
+ */
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.FileWriter;
@@ -17,7 +25,7 @@ import java.io.FileOutputStream;
 
 
 public class zkComplexClient implements Watcher{
-	public ArrayList<Integer> replicas = new ArrayList<Integer>();
+	public ArrayList<Integer> partitions = new ArrayList<Integer>();
 	static final String[] machines = {"172.22.138.16", "172.22.138.18", "172.22.138.52"};
 	static final String[] ports = {"12181", "22181", "32181"};
 	static final String[] znodes = {"/db1", "/db2", "/db3"};
@@ -31,6 +39,7 @@ public class zkComplexClient implements Watcher{
 	 */
 	private ZooKeeper[][] paxosInstances = new ZooKeeper[3][3];
 	private int noOfOps;
+	private int naiveMode = -1;
 	
 	static long HKey = 0;
 	static long LKey = 0;
@@ -84,16 +93,23 @@ public class zkComplexClient implements Watcher{
 	public static zkComplexClient initializeZKClient() {
 		
 		zkComplexClient zkObj = new zkComplexClient();
-		zkObj.replicas.add(0, new Integer(1));
-		zkObj.replicas.add(1, new Integer(2));
-		zkObj.replicas.add(2, new Integer(3));
+		zkObj.partitions.add(0, new Integer(1));
+		zkObj.partitions.add(1, new Integer(2));
+		zkObj.partitions.add(2, new Integer(3));
 		
 		ZooKeeper read, write = null;
 		int i = 0, j = 0, k = 1;
 		String hostPort;
 		try {
-
-			for(; i < 3; i++) {
+			// i - partition number
+			// j - zk connections per replica
+			/*
+			 * 		j=0			j=1				j=2
+			 * i=0	read[ssd]	write(L)/read	read
+			 * i=1	read[ssd]	write(L)/read	read
+			 * i=2	read[ssd]	wrute(L)/read	read
+			 */
+			for(i = 0; i < 3; i++) {
 				k = 1;
 				hostPort = machines[i]+":"+ports[i];
 				read = new ZooKeeper(hostPort, 30000, zkObj);
@@ -150,7 +166,6 @@ public class zkComplexClient implements Watcher{
 		int reads = 0, writes = 0;
         
         try {
-        	
         	long startTime = System.currentTimeMillis();
         	long localStartTime = 0;
         	long totalReadTime = 0;
@@ -176,16 +191,19 @@ public class zkComplexClient implements Watcher{
         	
     		byte[] lastWrittenKey = new byte[16];//TEMP
     		Arrays.fill(lastWrittenKey, (byte)'0');//TEMP
+			
+    		// Round robin counts
+			int[] rrCounts = new int[partitions.size()];
+			
     		while(true) {
     			retData = null;
     			ZooKeeper zkFinal = null;
     			randKey = randKey();
     			operation = randOperation(readWritePercentage);
-    			Collections.shuffle(replicas);
-    			int randomPartition = replicas.get(0).intValue();
+    			Collections.shuffle(partitions);
+    			int randomPartition = partitions.get(0).intValue();
     			//LKey++;
     			//randKey = String.valueOf(HKey) + String.valueOf(LKey);
-
     			bOut.reset();
     			bOut.write(randKey.getBytes());
 
@@ -202,8 +220,16 @@ public class zkComplexClient implements Watcher{
     			System.arraycopy(key, 0, forGetData, 16-key.length, key.length);
     			try {
     				if(operation.equals("READ")) {
-    					zkFinal = paxosInstances[randomPartition-1][0];
-    					
+    					if ( naiveMode == -1 ) {
+    						zkFinal = paxosInstances[randomPartition-1][0];
+    					} else {
+    						//naive mode
+    						if ( naiveMode == 0 ) {
+    							// RR
+    							zkFinal = paxosInstances[randomPartition-1][rrCounts[randomPartition-1]%3];
+    							rrCounts[randomPartition-1]++;
+    						}
+    					}
     					//System.out.println("TESTING" + /*new String(lastWrittenKey) +*/" "+ new String(new String(forGetData).getBytes()));
     					localStartTime = System.currentTimeMillis();
     					retData = zkFinal.getDataByKey(znodes[randomPartition-1], new String(forGetData));
@@ -215,13 +241,14 @@ public class zkComplexClient implements Watcher{
     						System.err.println("******************** retData is null ****************");
     					}
     				} else if(operation.equals("WRITE")) {
-    					if(Math.random() < 0.5) {
+    					// index 1 replica must be the Leader replica
+    					//if(Math.random() < 0.5) {
     						zkFinal = paxosInstances[randomPartition-1][1];
     						//System.out.println("******* WRITE: index 1 chosen ***************");
-    					} else {
-    						zkFinal = paxosInstances[randomPartition-1][2];
+    					//} else {
+    					//	zkFinal = paxosInstances[randomPartition-1][2];
     						//System.out.println("******* WRITE: index 2 chosen ***************");
-    					} //zkFinal = paxosInstances[randomPartition-1][0]; //TEMP
+    					//} //zkFinal = paxosInstances[randomPartition-1][0]; //TEMP
     					
     					localStartTime = System.currentTimeMillis();
     					zkFinal.setData(znodes[randomPartition-1], forSetData, -1);
@@ -302,14 +329,13 @@ public class zkComplexClient implements Watcher{
 	//@Override
 	public void process(WatchedEvent event) {
 		// TODO Auto-generated method stub
-
-		
+	
 	}
 	
 	public static void main(String[] args) {
 		
-		if(args.length < 3) {
-			System.out.println("USAGE: <program> <workloadDescription> <logFilePath> <noOfOps>");
+		if(args.length < 3 || args.length > 4) {
+			System.out.println("USAGE: <program> <workloadDescription> <logFilePath> <noOfOps> [<naiveMode> {RR=0,...}]");
 			return;
 		}
 		
@@ -322,7 +348,9 @@ public class zkComplexClient implements Watcher{
         zkComplexClient zkObj = initializeZKClient();
         zkObj.logFileName = logFileName;
         zkObj.noOfOps = Integer.parseInt(args[2]);
-        
+        if ( args.length == 4 ) {
+        	zkObj.naiveMode  = Integer.parseInt(args[3]);
+        }
         zkObj.runReadWriteLoad(readWritePercentage);
 
         zkObj.close();

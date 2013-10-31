@@ -73,9 +73,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import org.iq80.leveldb.*;
 import static org.fusesource.leveldbjni.JniDBFactory.*;
-
-
-
+//import org.iq80.leveldb.impl.Iq80DBFactory.*;
 
 /**
  * This class maintains the tree data structure. It doesn't have any networking
@@ -90,7 +88,7 @@ public class DataTree {
 	private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
 
 	//#AddedCode : variable to control logging to disk
-	private static final boolean logNodeToFile  = false;
+	private static final boolean logNodeToFile  = true;
 	static DB db=null;
 	//Location of the temporary files.
 	private static final String nodeLogDir = DataTree.getDBRootPath(); 
@@ -166,6 +164,7 @@ public class DataTree {
 	 * these are the number of acls that we have in the datatree
 	 */
 	private long aclIndex = 0;
+
 
 	public static String getDBRootPath() {
 		String rPath = null;
@@ -724,6 +723,7 @@ public class DataTree {
 		byte[] key = null;
 		byte[] value = null;
 		if (!logNodeToFile | !path.contains(new String("/db"))) {
+			System.out.println("**************** ERROR CONDITION **********************");
 			return;
 		}
 		Options options = new Options();
@@ -742,6 +742,7 @@ public class DataTree {
 			// Use the db in here....
 			key = Arrays.copyOfRange(data, 0,16);
 			value = Arrays.copyOfRange(data, 16, 116);
+			// TODO need to remove this
 			System.out.println("********* Key :" + new String(key) + " Value : " + new String(value));
 			db.put(key, value);
 		} finally {
