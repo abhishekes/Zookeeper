@@ -33,9 +33,10 @@ public class zkComplexClient implements Watcher{
 	String logFileName;
 	/**
 	 * 2D array of dimensions 3*3
-	 * each row stands for the replica for which client wants to send read/write request
+	 * each row stands for the partition for which client wants to send read/write request
 	 * 1st column in each row stands for the replica which is on SSD
 	 * 2nd and 3rd columns are for HDD replicas
+	 * 2nd stands for leader replica
 	 */
 	private ZooKeeper[][] paxosInstances = new ZooKeeper[3][3];
 	private int noOfOps;

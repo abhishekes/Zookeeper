@@ -32,6 +32,7 @@ portForPartition3=2181
 logFileName=zkdb_log
 
 zkdb.verbose=false
+
 # 1/2/3
 table=1
 
@@ -44,7 +45,7 @@ table=1
 recordcount=1000
 insertcount=1000
 insertorder=ordered
-operationcount=1000000
+operationcount=1000
 workload=com.yahoo.ycsb.workloads.CoreWorkload
 
 requestdistribution=uniform
