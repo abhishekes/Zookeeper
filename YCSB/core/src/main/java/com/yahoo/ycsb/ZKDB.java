@@ -246,6 +246,27 @@ public class ZKDB extends DB implements Watcher
 
 	}
 
+	
+	public void cleanup() { 
+		int i = 0;
+		int j = 0;
+		for(; i < 3; i++) {
+			j = 0;
+			for(; j < 3; j++) {
+				try {
+					paxosInstances[i][j].close();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					//throw DBException;
+				} catch (NullPointerException e) {
+					e.printStackTrace();
+					//throw DBException;
+				}
+			}
+		}	
+	}
+	
 	/**
 	 * Read a record from the database. Each field/value pair from the result will be stored in a HashMap.
 	 *
