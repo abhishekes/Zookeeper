@@ -248,6 +248,7 @@ public class ZKDB extends DB implements Watcher
 
 	
 	public void cleanup() { 
+		System.out.println("********* CLEANUP called **********");
 		int i = 0;
 		int j = 0;
 		for(; i < 3; i++) {
