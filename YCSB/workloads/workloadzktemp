@@ -33,6 +33,10 @@ logFileName=zkdb_log
 
 zkdb.verbose=false
 
+# complex - 0
+# naive - 1
+naiveMode=0
+
 # 1/2/3
 table=1
 
