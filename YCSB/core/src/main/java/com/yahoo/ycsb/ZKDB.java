@@ -81,10 +81,10 @@ public class ZKDB extends DB implements Watcher
 	}
 
 	protected void finalize() {
-		long endTime = System.currentTimeMillis();
+		long initTime = System.currentTimeMillis();
 		logger = getLoggerHandle();
 		try {
-			logger.write("********************** INIT TIME: " + endTime + " ***********************\n");
+			logger.write("********************** INIT TIME: " + initTime + " ***********************\n");
 		} catch (IOException e2) {
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
@@ -204,6 +204,17 @@ public class ZKDB extends DB implements Watcher
 			 * i=1	read[ssd]	write(L)/read	read
 			 * i=2	read[ssd]	wrute(L)/read	read
 			 */
+			/*
+			 * 		read[ssd]	write[L]/read	read
+			 * 
+			 * db1	m1:p1		m2:p1			m3:p1
+			 * 
+			 * db2	m2:p2		m3:p2			m1:p2
+			 * 
+			 * db3	m3:p3		m1:p3			m2:p3
+			 * 
+			 */
+			
 			for(i = 0; i < 3; i++) {
 				k = 1;
 				hostPort = machines[i]+":"+portsPerPartition[i];

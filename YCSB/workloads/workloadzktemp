@@ -52,6 +52,7 @@ insertorder=ordered
 operationcount=1000
 workload=com.yahoo.ycsb.workloads.CoreWorkload
 
+#distribution options: uniform, zipfian, exponential, latest, hotspot
 requestdistribution=uniform
 
 readallfields=true
@@ -61,5 +62,4 @@ updateproportion=0.5
 scanproportion=0
 insertproportion=0
 
-#requestdistribution=zipfian
 
