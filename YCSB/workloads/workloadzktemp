@@ -34,7 +34,8 @@ logFileName=zkdb_log
 zkdb.verbose=false
 
 # complex - 0
-# naive - 1
+# naive(Round Robin) - 1
+# naive(Random Replica) - 2
 naiveMode=0
 
 # 1/2/3

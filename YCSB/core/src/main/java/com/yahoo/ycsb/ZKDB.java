@@ -57,6 +57,7 @@ public class ZKDB extends DB implements Watcher
 	private ZooKeeper[][] paxosInstances = new ZooKeeper[3][3];
 	// naiveMode = 0		:	complex client
 	// naiveMode = 1		: 	rr client
+	// naiveMode = 2		:	random client
 	private int naiveMode = 0;
 	public static final String DEFAULT_NAIVE_MODE = "0";
 	
@@ -321,13 +322,18 @@ public class ZKDB extends DB implements Watcher
 		ZooKeeper zkFinal = null;
 		if ( naiveMode == 0 ) {
 			zkFinal = paxosInstances[partitionNo-1][0];
-		} else {
-			//naive mode
-			if ( naiveMode == 1 ) {
-				// RR
-				zkFinal = paxosInstances[partitionNo-1][rrCount%3];
-				rrCount++;
-			}
+		}
+		//naive mode: RR
+		else if ( naiveMode == 1 ) {
+			// RR
+			zkFinal = paxosInstances[partitionNo-1][rrCount%3];
+			rrCount++;
+		}
+		//naive mode: Random Replica
+		else if ( naiveMode == 2 ) {	
+			// Random Replica
+			int ranRep = (int)Math.floor( Math.random() * 3 );
+			zkFinal = paxosInstances[partitionNo-1][ranRep];
 		}
 
 		try {
