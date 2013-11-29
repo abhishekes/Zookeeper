@@ -32,6 +32,7 @@ import java.util.Vector;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper.States;
 
 /**
  * Basic DB that just prints out the requested operations, instead of doing them against a database.
@@ -219,8 +220,9 @@ public class ZKDB extends DB implements Watcher
 			for(i = 0; i < 3; i++) {
 				k = 1;
 				hostPort = machines[i]+":"+portsPerPartition[i];
-				read = new ZooKeeper(hostPort, 30000, this);
-				
+				read = new ZooKeeper(hostPort, 30000, this); 
+				while( read.getState() != States.CONNECTED ) {
+				}
 				byte[] tmp = new String(znodes[i]).getBytes("UTF-16");
 				if (read.exists(znodes[i], null) == null) {
 					read.create(znodes[i], tmp, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -232,6 +234,8 @@ public class ZKDB extends DB implements Watcher
 					if(j != i) {
 						hostPort = machines[j]+":"+portsPerPartition[i];
 						write = new ZooKeeper(hostPort, 30000, this);
+						while( write.getState() != States.CONNECTED ) {
+						}
 						paxosInstances[i][k] = write;
 						k++;
 						System.out.println("ZooKeeper connection for - (" + i +", "+ String.valueOf(k-1) + "), established with :" + hostPort);
@@ -344,7 +348,7 @@ public class ZKDB extends DB implements Watcher
 				return -1;
 			}
 		} catch (ConnectionLossException e) {
-			System.err.println("ConnectionLossException recved for PaxosInstance - ");
+			System.err.println("ConnectionLossException recved in getData for PaxosInstance - ");
 			e.printStackTrace();
 		} catch (Exception e) {
             e.printStackTrace();
@@ -438,13 +442,12 @@ public class ZKDB extends DB implements Watcher
 		zkFinal = paxosInstances[partitionNo-1][1];
 		try {
 			zkFinal.setData(znodes[partitionNo-1], forSetData, -1);
-		} catch (KeeperException e) {
-			// TODO Auto-generated catch block
+		} catch (ConnectionLossException e) {
+			System.err.println("ConnectionLossException recved in setData for PaxosInstance - ");
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} catch (Exception e) {
+            e.printStackTrace();
+        }
 		
 		return 0;
 	}
