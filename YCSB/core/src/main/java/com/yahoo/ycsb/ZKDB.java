@@ -348,7 +348,7 @@ public class ZKDB extends DB implements Watcher
 				System.err.println("******************** retData is null ****************");
 				return -1;
 			}
-			System.out.println("READ CALLED FOR "+this);
+			//System.out.println("READ CALLED FOR "+this);
 		} catch (ConnectionLossException e) {
 			System.out.println("ConnectionLossException recved in getData for PaxosInstance - "+this);
 			e.printStackTrace();
@@ -445,7 +445,7 @@ public class ZKDB extends DB implements Watcher
 		try {
 			zkFinal.setData(znodes[partitionNo-1], forSetData, -1);
 		} catch (ConnectionLossException e) {
-			System.err.println("ConnectionLossException recved in setData for PaxosInstance - ");
+			System.err.println("ConnectionLossException recved in setData for PaxosInstance - "+this);
 			e.printStackTrace();
 		} catch (Exception e) {
             e.printStackTrace();
