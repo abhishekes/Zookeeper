@@ -350,7 +350,7 @@ public class ZKDB extends DB implements Watcher
 			}
 			System.out.println("READ CALLED FOR "+this);
 		} catch (ConnectionLossException e) {
-			System.out.println("ConnectionLossException recved in getData for PaxosInstance - ");
+			System.out.println("ConnectionLossException recved in getData for PaxosInstance - "+this);
 			e.printStackTrace();
 		} catch (Exception e) {
             e.printStackTrace();
