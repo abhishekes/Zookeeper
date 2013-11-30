@@ -222,6 +222,7 @@ public class ZKDB extends DB implements Watcher
 				hostPort = machines[i]+":"+portsPerPartition[i];
 				read = new ZooKeeper(hostPort, 30000, this); 
 				while( read.getState() != States.CONNECTED ) {
+					System.out.println("ZK connection state: "+read.getState());
 				}
 				byte[] tmp = new String(znodes[i]).getBytes("UTF-16");
 				if (read.exists(znodes[i], null) == null) {
@@ -235,6 +236,7 @@ public class ZKDB extends DB implements Watcher
 						hostPort = machines[j]+":"+portsPerPartition[i];
 						write = new ZooKeeper(hostPort, 30000, this);
 						while( write.getState() != States.CONNECTED ) {
+							System.out.println("ZK connection state: "+write.getState());
 						}
 						paxosInstances[i][k] = write;
 						k++;
@@ -342,11 +344,11 @@ public class ZKDB extends DB implements Watcher
 
 		try {
 			retData = zkFinal.getDataByKey(znodes[partitionNo-1], new String(forGetData));
-
 			if(retData == null) {
 				System.err.println("******************** retData is null ****************");
 				return -1;
 			}
+			System.out.println("READ CALLED FOR "+this);
 		} catch (ConnectionLossException e) {
 			System.err.println("ConnectionLossException recved in getData for PaxosInstance - ");
 			e.printStackTrace();
